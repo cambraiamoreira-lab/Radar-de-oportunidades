@@ -1,0 +1,213 @@
+
+# ============================================================
+# RADAR DE OPORTUNIDADES
+# Módulo: Catálogo Brasileiro de APIs
+# Versão: 1.0
+# ============================================================
+
+APIS = [
+
+    {
+        "id": "dados_abertos_brasil",
+        "nome": "Portal Brasileiro de Dados Abertos",
+        "orgao": "Controladoria-Geral da União",
+        "segmento": "Multissetorial",
+        "origem": "Governo Federal",
+
+        "descricao": (
+            "API que permite pesquisar conjuntos de dados "
+            "públicos, organizações, grupos e temas disponíveis "
+            "no Portal Brasileiro de Dados Abertos."
+        ),
+
+        "dados_disponiveis": [
+            "Conjuntos de dados públicos",
+            "Organizações",
+            "Grupos temáticos",
+            "Tags e classificações"
+        ],
+
+        "aplicacoes_hipoteticas": [
+            "Painéis de indicadores",
+            "Ferramentas de pesquisa de dados",
+            "Automação de consultas públicas"
+        ],
+
+        "documentacao": (
+            "https://www.gov.br/conecta/catalogo/apis/"
+            "api-portal-de-dados-abertos/"
+        ),
+
+        "url_acesso": "https://dados.gov.br/swagger-ui/index.html",
+
+        "modelo_acesso": "API pública a investigar",
+
+        "exige_chave": "A verificar",
+
+        "gratuidade": "A verificar",
+
+        "uso_comercial": "A verificar",
+
+        "status": "Catalogada, acesso técnico pendente",
+
+        "prioridade_investigacao": "Alta"
+    },
+
+    {
+        "id": "banco_central_dados",
+        "nome": "Dados Abertos do Banco Central",
+        "orgao": "Banco Central do Brasil",
+        "segmento": "Economia e finanças",
+        "origem": "Governo Federal",
+
+        "descricao": (
+            "Conjuntos de dados econômicos e financeiros "
+            "disponibilizados pelo Banco Central em formatos "
+            "que incluem API, JSON e OData."
+        ),
+
+        "dados_disponiveis": [
+            "Taxas de câmbio",
+            "Tarifas bancárias",
+            "Taxas de juros",
+            "Estatísticas do Pix",
+            "Instituições financeiras"
+        ],
+
+        "aplicacoes_hipoteticas": [
+            "Comparadores financeiros",
+            "Monitoramento de tarifas",
+            "Painéis econômicos",
+            "Alertas de variação cambial"
+        ],
+
+        "documentacao": (
+            "https://dadosabertos.bcb.gov.br/"
+        ),
+
+        "url_acesso": (
+            "https://dadosabertos.bcb.gov.br/dataset/"
+            "?res_format=API"
+        ),
+
+        "modelo_acesso": "Dados públicos via API",
+
+        "exige_chave": "A verificar por conjunto",
+
+        "gratuidade": "A verificar por conjunto",
+
+        "uso_comercial": "A verificar por licença",
+
+        "status": "Catalogada, acesso técnico pendente",
+
+        "prioridade_investigacao": "Alta"
+    },
+
+    {
+        "id": "pncp",
+        "nome": "Portal Nacional de Contratações Públicas",
+        "orgao": "Governo Federal",
+        "segmento": "Compras públicas e negócios",
+        "origem": "Governo Federal",
+
+        "descricao": (
+            "Disponibiliza informações sobre contratações "
+            "públicas, editais e oportunidades de fornecimento."
+        ),
+
+        "dados_disponiveis": [
+            "Contratações públicas",
+            "Editais",
+            "Processos de contratação"
+        ],
+
+        "aplicacoes_hipoteticas": [
+            "Monitoramento de oportunidades",
+            "Alertas de compras públicas",
+            "Pesquisa de mercado fornecedor"
+        ],
+
+        "documentacao": (
+            "https://www.gov.br/pncp/pt-br/"
+            "acesso-a-informacao/dados-abertos"
+        ),
+
+        "url_acesso": (
+            "https://pncp.gov.br/api/consulta/"
+            "v1/contratacoes/proposta"
+        ),
+
+        "modelo_acesso": "Consulta pública",
+
+        "exige_chave": "Não identificada no teste realizado",
+
+        "gratuidade": "Consulta pública testada",
+
+        "uso_comercial": "Verificar condições de reutilização",
+
+        "status": "Consulta testada no projeto",
+
+        "prioridade_investigacao": "Média"
+    }
+
+]
+
+
+# ============================================================
+# FUNÇÕES DO CATÁLOGO
+# ============================================================
+
+def listar_apis():
+    return APIS
+
+
+def buscar_api_por_id(api_id):
+
+    for api in APIS:
+
+        if api["id"] == api_id:
+            return api
+
+    return None
+
+
+def buscar_por_segmento(segmento):
+
+    segmento = str(segmento).lower()
+
+    return [
+        api for api in APIS
+        if segmento in api["segmento"].lower()
+    ]
+
+
+def contar_apis():
+
+    return len(APIS)
+
+
+def listar_segmentos():
+
+    return sorted(set(
+        api["segmento"]
+        for api in APIS
+    ))
+
+
+def resumo_catalogo():
+
+    return {
+        "total_apis": len(APIS),
+
+        "segmentos": len(listar_segmentos()),
+
+        "consultas_testadas": sum(
+            1 for api in APIS
+            if api["status"] == "Consulta testada no projeto"
+        ),
+
+        "pendentes_de_validacao": sum(
+            1 for api in APIS
+            if "pendente" in api["status"].lower()
+        )
+    }
