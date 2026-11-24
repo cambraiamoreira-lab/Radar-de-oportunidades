@@ -1,14 +1,11 @@
 
 import streamlit as st
 
-from fontes_mercado import listar_fontes, fontes_publicas
-from motor_pncp import buscar_contratacoes_abertas
-from analisador_oportunidades import analisar_contratacoes
-
-
-# --------------------------------------------------
-# CONFIGURAÇÃO DA PÁGINA
-# --------------------------------------------------
+from catalogo_apis import (
+    listar_apis,
+    listar_segmentos,
+    resumo_catalogo
+)
 
 st.set_page_config(
     page_title="Radar de Oportunidades",
@@ -16,206 +13,133 @@ st.set_page_config(
     layout="wide"
 )
 
-
-# --------------------------------------------------
-# CABEÇALHO
-# --------------------------------------------------
-
 st.title("📡 RADAR DE OPORTUNIDADES")
 
 st.caption(
-    "Inteligência de negócios digitais | Mercado brasileiro"
+    "Descoberta de APIs brasileiras e oportunidades digitais"
 )
 
+st.divider()
 
-# --------------------------------------------------
 # INDICADORES
-# --------------------------------------------------
 
-fontes = listar_fontes()
+resumo = resumo_catalogo()
 
 col1, col2, col3 = st.columns(3)
 
 col1.metric(
-    "Fontes cadastradas",
-    len(fontes)
+    "APIs cadastradas",
+    resumo["total_apis"]
 )
 
 col2.metric(
-    "Fontes públicas",
-    len(fontes_publicas())
+    "Segmentos identificados",
+    resumo["segmentos"]
 )
 
 col3.metric(
-    "Oportunidades investigadas",
-    0
+    "Consultas testadas",
+    resumo["consultas_testadas"]
 )
-
 
 st.divider()
 
+# FILTRO
 
-# --------------------------------------------------
-# INVESTIGAÇÃO NO PNCP
-# --------------------------------------------------
+st.header("🔎 Catálogo brasileiro de APIs")
 
-st.header("🏛️ Investigação de contratações públicas")
+segmentos = ["Todos"] + listar_segmentos()
+
+segmento_escolhido = st.selectbox(
+    "Filtrar por segmento",
+    segmentos
+)
+
+apis = listar_apis()
+
+if segmento_escolhido != "Todos":
+
+    apis = [
+        api for api in apis
+        if api["segmento"] == segmento_escolhido
+    ]
 
 st.write(
-    "Pesquise contratações públicas e identifique "
-    "necessidades que possam indicar oportunidades "
-    "para soluções digitais."
+    f"**{len(apis)} APIs encontradas no catálogo**"
 )
 
-uf = st.selectbox(
-    "Estado para pesquisar",
-    [
-        "Todos",
-        "RS",
-        "SC",
-        "PR",
-        "SP",
-        "RJ",
-        "MG",
-        "BA",
-        "GO",
-        "DF"
-    ]
-)
+# LISTAGEM
 
+for api in apis:
 
-if st.button(
-    "🔍 Buscar e analisar oportunidades",
-    type="primary"
-):
+    with st.expander(
+        f"🌐 {api['nome']} | {api['segmento']}"
+    ):
 
-    with st.spinner("Consultando o PNCP..."):
+        st.write("**Órgão responsável:**", api["orgao"])
 
-        resultado = buscar_contratacoes_abertas(
-            uf=None if uf == "Todos" else uf,
-            tamanho_pagina=20
-        )
+        st.write("**Origem:**", api["origem"])
 
-    if resultado["sucesso"]:
+        st.write("**Descrição:**", api["descricao"])
 
-        registros = resultado["registros"]
+        st.write("**Dados disponíveis:**")
 
-        st.success(
-            f"Consulta concluída: {len(registros)} registros recebidos."
-        )
+        for dado in api["dados_disponiveis"]:
+            st.write(f"• {dado}")
 
-        if registros:
+        st.write("**Possíveis aplicações:**")
 
-            analises = analisar_contratacoes(registros)
+        for aplicacao in api["aplicacoes_hipoteticas"]:
+            st.write(f"• {aplicacao}")
 
-            st.header("🧠 Inteligência de mercado")
-
-            st.write(
-                f"Categorias identificadas: {len(analises)}"
-            )
-
-            if not analises:
-                st.info(
-                    "Os registros foram recebidos, mas nenhum "
-                    "objeto de contratação pôde ser classificado."
-                )
-
-            for item in analises:
-
-                titulo = (
-                    f"{item['categoria']} | "
-                    f"{item['ocorrencias']} ocorrências"
-                )
-
-                with st.expander(titulo):
-
-                    st.metric(
-                        "Pontuação exploratória",
-                        f"{item['pontuacao_exploratoria']}/100"
-                    )
-
-                    st.write(
-                        "**Sinais de soluções digitais:**",
-                        item["sinais_digitais"]
-                    )
-
-                    st.write(
-                        "**Interpretação:**",
-                        item["interpretacao"]
-                    )
-
-                    st.write("**Exemplos encontrados:**")
-
-                    for exemplo in item["exemplos"]:
-                        st.write(f"• {exemplo}")
-
-            st.warning(
-                "A pontuação é experimental. A frequência de "
-                "contratações não comprova demanda comercial, "
-                "rentabilidade ou disposição para pagar."
-            )
-
-            with st.expander("Consultar registros originais"):
-
-                for registro in registros:
-                    st.json(registro)
-
-        else:
-
-            st.info(
-                "Nenhuma contratação foi encontrada nessa consulta."
-            )
-
-    else:
-
-        st.error(
-            resultado.get(
-                "erro",
-                "Não foi possível consultar o PNCP."
-            )
-        )
-
-
-st.divider()
-
-
-# --------------------------------------------------
-# FONTES DE INTELIGÊNCIA
-# --------------------------------------------------
-
-st.header("🌐 Fontes de inteligência")
-
-for fonte in fontes:
-
-    with st.expander(fonte["nome"]):
+        st.divider()
 
         st.write(
-            "**Categoria:**",
-            fonte["categoria"]
+            "**Modelo de acesso:**",
+            api["modelo_acesso"]
         )
 
         st.write(
-            "**Descrição:**",
-            fonte["descricao"]
+            "**Necessidade de chave:**",
+            api["exige_chave"]
         )
 
         st.write(
-            "**Acesso:**",
-            fonte["acesso"]
+            "**Gratuidade:**",
+            api["gratuidade"]
+        )
+
+        st.write(
+            "**Uso comercial:**",
+            api["uso_comercial"]
+        )
+
+        st.write(
+            "**Situação:**",
+            api["status"]
         )
 
         st.link_button(
-            "Consultar fonte",
-            fonte["url"]
+            "Consultar documentação",
+            api["documentacao"]
         )
 
-
-# --------------------------------------------------
-# RODAPÉ
-# --------------------------------------------------
+        st.link_button(
+            "Acessar fonte",
+            api["url_acesso"]
+        )
 
 st.divider()
 
+st.header("🧭 Próximas análises")
+
+st.info(
+    "As APIs estão cadastradas. A próxima etapa será "
+    "verificar tecnicamente o acesso, a autenticação, "
+    "os limites, a atualização dos dados e as condições "
+    "de uso comercial."
+)
+
 st.caption(
-    "RADAR DE OPORTUNIDADES | Versão 0.4"
+    "RADAR DE OPORTUNIDADES | Nova arquitetura | Versão 1.0"
 )
