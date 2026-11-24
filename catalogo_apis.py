@@ -1,4 +1,3 @@
-
 # ============================================================
 # RADAR DE OPORTUNIDADES
 # Módulo: Catálogo Brasileiro de APIs
