@@ -7,6 +7,9 @@ from catalogo_apis import (
     resumo_catalogo
 )
 
+from verificador_apis import testar_banco_central
+
+
 st.set_page_config(
     page_title="Radar de Oportunidades",
     page_icon="📡",
@@ -44,7 +47,7 @@ col3.metric(
 
 st.divider()
 
-# FILTRO
+# CATÁLOGO
 
 st.header("🔎 Catálogo brasileiro de APIs")
 
@@ -58,7 +61,6 @@ segmento_escolhido = st.selectbox(
 apis = listar_apis()
 
 if segmento_escolhido != "Todos":
-
     apis = [
         api for api in apis
         if api["segmento"] == segmento_escolhido
@@ -68,8 +70,6 @@ st.write(
     f"**{len(apis)} APIs encontradas no catálogo**"
 )
 
-# LISTAGEM
-
 for api in apis:
 
     with st.expander(
@@ -77,9 +77,7 @@ for api in apis:
     ):
 
         st.write("**Órgão responsável:**", api["orgao"])
-
         st.write("**Origem:**", api["origem"])
-
         st.write("**Descrição:**", api["descricao"])
 
         st.write("**Dados disponíveis:**")
@@ -131,15 +129,91 @@ for api in apis:
 
 st.divider()
 
+# VERIFICADOR DE APIS
+
+st.header("🧪 Laboratório de testes")
+
+st.write(
+    "Vamos verificar se uma API brasileira responde "
+    "e entrega dados reais."
+)
+
+st.subheader("Banco Central do Brasil")
+
+st.write(
+    "Teste da série histórica de cotação de compra do dólar."
+)
+
+if st.button(
+    "🚀 Testar API do Banco Central",
+    type="primary"
+):
+
+    with st.spinner("Conectando ao Banco Central..."):
+
+        resultado = testar_banco_central()
+
+    if (
+        resultado["status"] == "Acessível"
+        and resultado["tem_dados"]
+    ):
+
+        st.success("API respondeu e retornou dados!")
+
+    elif resultado["status"] == "Acessível":
+
+        st.warning("API respondeu, mas não foram encontrados dados.")
+
+    else:
+
+        st.error("O teste identificou um problema.")
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric(
+        "Status",
+        resultado["status"]
+    )
+
+    col2.metric(
+        "Código HTTP",
+        resultado["codigo_http"]
+        if resultado["codigo_http"] is not None
+        else "N/A"
+    )
+
+    col3.metric(
+        "Tempo de resposta",
+        f"{resultado['tempo_resposta']} s"
+        if resultado["tempo_resposta"] is not None
+        else "N/A"
+    )
+
+    st.write(
+        "**Formato recebido:**",
+        resultado["formato"]
+    )
+
+    st.write(
+        "**Dados encontrados:**",
+        "Sim" if resultado["tem_dados"] else "Não"
+    )
+
+    st.info(resultado["detalhes"])
+
+    with st.expander("Ver resultado técnico completo"):
+        st.json(resultado)
+
+st.divider()
+
 st.header("🧭 Próximas análises")
 
 st.info(
-    "As APIs estão cadastradas. A próxima etapa será "
-    "verificar tecnicamente o acesso, a autenticação, "
-    "os limites, a atualização dos dados e as condições "
-    "de uso comercial."
+    "O próximo passo será ampliar os testes para outras "
+    "APIs brasileiras e investigar autenticação, limites, "
+    "atualização dos dados, gratuidade e uso comercial."
 )
 
 st.caption(
-    "RADAR DE OPORTUNIDADES | Nova arquitetura | Versão 1.0"
+    "RADAR DE OPORTUNIDADES | Nova arquitetura | Versão 1.1"
 )
