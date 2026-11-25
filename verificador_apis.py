@@ -4,15 +4,6 @@ import time
 
 
 def testar_api(url, parametros=None, timeout=20):
-    """
-    Testa uma API e verifica:
-    - Se o servidor responde
-    - Código HTTP
-    - Tempo de resposta
-    - Tipo de conteúdo
-    - Se retorna JSON válido
-    - Se existem dados na resposta
-    """
 
     inicio = time.time()
 
@@ -32,14 +23,16 @@ def testar_api(url, parametros=None, timeout=20):
             params=parametros,
             timeout=timeout,
             headers={
-                "User-Agent": "RadarDeOportunidades/1.0"
+                "User-Agent": "RadarDeOportunidades/1.0",
+                "Accept": "application/json"
             }
         )
 
-        tempo = round(time.time() - inicio, 2)
+        resultado["tempo_resposta"] = round(
+            time.time() - inicio, 2
+        )
 
         resultado["codigo_http"] = resposta.status_code
-        resultado["tempo_resposta"] = tempo
 
         resposta.raise_for_status()
 
@@ -49,6 +42,7 @@ def testar_api(url, parametros=None, timeout=20):
 
         if "json" in tipo:
             dados = resposta.json()
+
             resultado["formato"] = "JSON"
 
             if isinstance(dados, (dict, list)):
@@ -61,7 +55,9 @@ def testar_api(url, parametros=None, timeout=20):
             )
 
         else:
-            resultado["formato"] = tipo or "Não identificado"
+            resultado["formato"] = (
+                tipo or "Não identificado"
+            )
 
             resultado["status"] = "Resposta recebida"
 
@@ -107,10 +103,6 @@ def testar_api(url, parametros=None, timeout=20):
 
 
 def testar_banco_central():
-    """
-    Testa uma série histórica do Banco Central:
-    cotação de compra do dólar.
-    """
 
     url = (
         "https://api.bcb.gov.br/dados/serie/"
@@ -119,6 +111,21 @@ def testar_banco_central():
 
     parametros = {
         "formato": "json"
+    }
+
+    return testar_api(url, parametros)
+
+
+def testar_portal_dados_abertos():
+
+    url = (
+        "https://dados.gov.br/dados/api/"
+        "publico/conjuntos-dados"
+    )
+
+    parametros = {
+        "isPrivado": "false",
+        "pagina": 1
     }
 
     return testar_api(url, parametros)
@@ -134,6 +141,12 @@ def classificar_resultado(resultado):
 
     if resultado["status"] == "Acessível":
         return "API ACESSÍVEL, SEM DADOS"
+
+    if resultado["codigo_http"] == 401:
+        return "AUTENTICAÇÃO NECESSÁRIA OU NÃO AUTORIZADA"
+
+    if resultado["codigo_http"] == 403:
+        return "ACESSO PROIBIDO"
 
     return "NECESSITA INVESTIGAÇÃO"
 
@@ -155,4 +168,4 @@ def testar_lista_apis(lista_urls):
         resultados.append(resultado)
 
     return resultados
-      
+    
