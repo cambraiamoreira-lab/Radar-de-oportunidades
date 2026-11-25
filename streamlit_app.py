@@ -7,49 +7,66 @@ from catalogo_apis import (
     resumo_catalogo
 )
 
-from verificador_apis import testar_banco_central
+from verificador_apis import (
+    testar_banco_central,
+    testar_portal_dados_abertos
+)
 
 
 st.set_page_config(
     page_title="Radar de Oportunidades",
-    page_icon="📡",
+    page_icon="🔎",
     layout="wide"
 )
 
-st.title("📡 RADAR DE OPORTUNIDADES")
 
-st.caption(
-    "Descoberta de APIs brasileiras e oportunidades digitais"
+st.title("🔎 RADAR DE OPORTUNIDADES")
+
+st.markdown(
+    """
+    **Descubra APIs brasileiras, dados abertos
+    e oportunidades para criar soluções digitais.**
+
+    Nosso objetivo é identificar dados reais que possam
+    gerar automações, ferramentas e novos negócios.
+    """
 )
 
 st.divider()
 
-# INDICADORES
+
+# PAINEL DO CATÁLOGO
+
+st.subheader("📊 Visão geral do catálogo")
 
 resumo = resumo_catalogo()
 
 col1, col2, col3 = st.columns(3)
 
-col1.metric(
-    "APIs cadastradas",
-    resumo["total_apis"]
-)
+with col1:
+    st.metric(
+        "APIs catalogadas",
+        contar_apis_seguro()
+    )
 
-col2.metric(
-    "Segmentos identificados",
-    resumo["segmentos"]
-)
+with col2:
+    st.metric(
+        "Segmentos identificados",
+        len(listar_segmentos())
+    )
 
-col3.metric(
-    "Consultas testadas",
-    resumo["consultas_testadas"]
-)
+with col3:
+    st.metric(
+        "Fontes em investigação",
+        len(listar_apis())
+    )
 
-st.divider()
 
 # CATÁLOGO
 
-st.header("🔎 Catálogo brasileiro de APIs")
+st.divider()
+
+st.subheader("📚 Catálogo de APIs brasileiras")
 
 segmentos = ["Todos"] + listar_segmentos()
 
@@ -63,130 +80,99 @@ apis = listar_apis()
 if segmento_escolhido != "Todos":
     apis = [
         api for api in apis
-        if api["segmento"] == segmento_escolhido
+        if api.get("segmento") == segmento_escolhido
     ]
-
-st.write(
-    f"**{len(apis)} APIs encontradas no catálogo**"
-)
 
 for api in apis:
 
-    with st.expander(
-        f"🌐 {api['nome']} | {api['segmento']}"
-    ):
-
-        st.write("**Órgão responsável:**", api["orgao"])
-        st.write("**Origem:**", api["origem"])
-        st.write("**Descrição:**", api["descricao"])
-
-        st.write("**Dados disponíveis:**")
-
-        for dado in api["dados_disponiveis"]:
-            st.write(f"• {dado}")
-
-        st.write("**Possíveis aplicações:**")
-
-        for aplicacao in api["aplicacoes_hipoteticas"]:
-            st.write(f"• {aplicacao}")
-
-        st.divider()
+    with st.expander(api.get("nome", "API sem nome")):
 
         st.write(
-            "**Modelo de acesso:**",
-            api["modelo_acesso"]
+            "**Órgão responsável:**",
+            api.get("orgao", "Não informado")
         )
 
         st.write(
-            "**Necessidade de chave:**",
-            api["exige_chave"]
+            "**Segmento:**",
+            api.get("segmento", "Não informado")
+        )
+
+        st.write(
+            "**Descrição:**",
+            api.get("descricao", "Não informada")
+        )
+
+        st.write(
+            "**Dados disponíveis:**",
+            api.get("dados_disponiveis", "Não informado")
+        )
+
+        st.write(
+            "**Aplicações possíveis:**",
+            api.get("aplicacoes_hipoteticas", "Não informadas")
+        )
+
+        st.write(
+            "**Acesso:**",
+            api.get("modelo_acesso", "A investigar")
+        )
+
+        st.write(
+            "**Chave de acesso:**",
+            api.get("requer_chave", "A verificar")
         )
 
         st.write(
             "**Gratuidade:**",
-            api["gratuidade"]
+            api.get("gratuita", "A verificar")
         )
 
         st.write(
             "**Uso comercial:**",
-            api["uso_comercial"]
+            api.get("uso_comercial", "A verificar")
         )
 
         st.write(
             "**Situação:**",
-            api["status"]
+            api.get("status", "Não verificada")
         )
 
-        st.link_button(
-            "Consultar documentação",
-            api["documentacao"]
-        )
+        if api.get("documentacao"):
+            st.markdown(
+                f"[📖 Documentação]({api['documentacao']})"
+            )
 
-        st.link_button(
-            "Acessar fonte",
-            api["url_acesso"]
-        )
+        if api.get("url_acesso"):
+            st.markdown(
+                f"[🌐 Acessar fonte]({api['url_acesso']})"
+            )
+
+
+# LABORATÓRIO DE TESTES
 
 st.divider()
-
-# VERIFICADOR DE APIS
 
 st.header("🧪 Laboratório de testes")
 
 st.write(
-    "Vamos verificar se uma API brasileira responde "
-    "e entrega dados reais."
+    "Teste a disponibilidade técnica das APIs "
+    "e verifique se elas retornam dados."
 )
 
-st.subheader("Banco Central do Brasil")
 
-st.write(
-    "Teste da série histórica de cotação de compra do dólar."
-)
+def exibir_resultado(resultado):
 
-if st.button(
-    "🚀 Testar API do Banco Central",
-    type="primary"
-):
+    st.write("**Status:**", resultado["status"])
 
-    with st.spinner("Conectando ao Banco Central..."):
-
-        resultado = testar_banco_central()
-
-    if (
-        resultado["status"] == "Acessível"
-        and resultado["tem_dados"]
-    ):
-
-        st.success("API respondeu e retornou dados!")
-
-    elif resultado["status"] == "Acessível":
-
-        st.warning("API respondeu, mas não foram encontrados dados.")
-
-    else:
-
-        st.error("O teste identificou um problema.")
-
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric(
-        "Status",
-        resultado["status"]
-    )
-
-    col2.metric(
-        "Código HTTP",
+    st.write(
+        "**Código HTTP:**",
         resultado["codigo_http"]
-        if resultado["codigo_http"] is not None
-        else "N/A"
     )
 
-    col3.metric(
-        "Tempo de resposta",
-        f"{resultado['tempo_resposta']} s"
-        if resultado["tempo_resposta"] is not None
-        else "N/A"
+    st.write(
+        "**Tempo de resposta:**",
+        resultado["tempo_resposta"],
+        "segundos"
     )
 
     st.write(
@@ -199,21 +185,51 @@ if st.button(
         "Sim" if resultado["tem_dados"] else "Não"
     )
 
-    st.info(resultado["detalhes"])
+    st.write(
+        "**Detalhes:**",
+        resultado["detalhes"]
+    )
 
-    with st.expander("Ver resultado técnico completo"):
+    with st.expander("Visualizar resposta técnica"):
         st.json(resultado)
+
+
+# TESTE BANCO CENTRAL
+
+st.subheader("🏦 Banco Central do Brasil")
+
+if st.button("🚀 Testar API do Banco Central"):
+
+    with st.spinner("Consultando Banco Central..."):
+
+        resultado = testar_banco_central()
+
+    exibir_resultado(resultado)
+
+
+# TESTE PORTAL DE DADOS ABERTOS
+
+st.subheader("📂 Portal Brasileiro de Dados Abertos")
+
+if st.button("🚀 Testar Portal de Dados Abertos"):
+
+    with st.spinner("Consultando Portal de Dados Abertos..."):
+
+        resultado = testar_portal_dados_abertos()
+
+    exibir_resultado(resultado)
+
+
+# RODAPÉ
 
 st.divider()
 
-st.header("🧭 Próximas análises")
-
-st.info(
-    "O próximo passo será ampliar os testes para outras "
-    "APIs brasileiras e investigar autenticação, limites, "
-    "atualização dos dados, gratuidade e uso comercial."
-)
-
 st.caption(
-    "RADAR DE OPORTUNIDADES | Nova arquitetura | Versão 1.1"
+    "Radar de Oportunidades | Versão 1.2"
 )
+
+
+# FUNÇÃO AUXILIAR
+
+def contar_apis_seguro():
+    return len(listar_apis())
