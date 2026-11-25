@@ -3,8 +3,7 @@ import streamlit as st
 
 from catalogo_apis import (
     listar_apis,
-    listar_segmentos,
-    resumo_catalogo
+    listar_segmentos
 )
 
 from verificador_apis import (
@@ -35,31 +34,20 @@ st.markdown(
 st.divider()
 
 
-# PAINEL DO CATÁLOGO
+# VISÃO GERAL
+
+apis_catalogadas = listar_apis()
+segmentos = listar_segmentos()
 
 st.subheader("📊 Visão geral do catálogo")
 
-resumo = resumo_catalogo()
-
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 
 with col1:
-    st.metric(
-        "APIs catalogadas",
-        contar_apis_seguro()
-    )
+    st.metric("APIs catalogadas", len(apis_catalogadas))
 
 with col2:
-    st.metric(
-        "Segmentos identificados",
-        len(listar_segmentos())
-    )
-
-with col3:
-    st.metric(
-        "Fontes em investigação",
-        len(listar_apis())
-    )
+    st.metric("Segmentos identificados", len(segmentos))
 
 
 # CATÁLOGO
@@ -68,95 +56,76 @@ st.divider()
 
 st.subheader("📚 Catálogo de APIs brasileiras")
 
-segmentos = ["Todos"] + listar_segmentos()
-
-segmento_escolhido = st.selectbox(
+filtro = st.selectbox(
     "Filtrar por segmento",
-    segmentos
+    ["Todos"] + segmentos
 )
 
-apis = listar_apis()
+apis_exibidas = apis_catalogadas
 
-if segmento_escolhido != "Todos":
-    apis = [
-        api for api in apis
-        if api.get("segmento") == segmento_escolhido
+if filtro != "Todos":
+    apis_exibidas = [
+        api for api in apis_catalogadas
+        if api.get("segmento") == filtro
     ]
 
-for api in apis:
+for api in apis_exibidas:
 
     with st.expander(api.get("nome", "API sem nome")):
 
-        st.write(
-            "**Órgão responsável:**",
-            api.get("orgao", "Não informado")
-        )
+        st.write("**Órgão responsável:**",
+                 api.get("orgao", "Não informado"))
 
-        st.write(
-            "**Segmento:**",
-            api.get("segmento", "Não informado")
-        )
+        st.write("**Segmento:**",
+                 api.get("segmento", "Não informado"))
 
-        st.write(
-            "**Descrição:**",
-            api.get("descricao", "Não informada")
-        )
+        st.write("**Descrição:**",
+                 api.get("descricao", "Não informada"))
 
-        st.write(
-            "**Dados disponíveis:**",
-            api.get("dados_disponiveis", "Não informado")
-        )
+        st.write("**Dados disponíveis:**",
+                 api.get("dados_disponiveis", "Não informado"))
 
-        st.write(
-            "**Aplicações possíveis:**",
-            api.get("aplicacoes_hipoteticas", "Não informadas")
-        )
+        st.write("**Aplicações possíveis:**",
+                 api.get("aplicacoes_hipoteticas", "Não informadas"))
 
-        st.write(
-            "**Acesso:**",
-            api.get("modelo_acesso", "A investigar")
-        )
+        st.write("**Modelo de acesso:**",
+                 api.get("modelo_acesso", "A investigar"))
 
-        st.write(
-            "**Chave de acesso:**",
-            api.get("requer_chave", "A verificar")
-        )
+        st.write("**Chave de acesso:**",
+                 api.get("requer_chave", "A verificar"))
 
-        st.write(
-            "**Gratuidade:**",
-            api.get("gratuita", "A verificar")
-        )
+        st.write("**Gratuidade:**",
+                 api.get("gratuita", "A verificar"))
 
-        st.write(
-            "**Uso comercial:**",
-            api.get("uso_comercial", "A verificar")
-        )
+        st.write("**Uso comercial:**",
+                 api.get("uso_comercial", "A verificar"))
 
-        st.write(
-            "**Situação:**",
-            api.get("status", "Não verificada")
-        )
+        st.write("**Situação:**",
+                 api.get("status", "Não verificada"))
 
-        if api.get("documentacao"):
+        documentacao = api.get("documentacao_url")
+        acesso = api.get("url_acesso")
+
+        if documentacao:
             st.markdown(
-                f"[📖 Documentação]({api['documentacao']})"
+                f"[📖 Documentação]({documentacao})"
             )
 
-        if api.get("url_acesso"):
+        if acesso:
             st.markdown(
-                f"[🌐 Acessar fonte]({api['url_acesso']})"
+                f"[🌐 Acessar fonte]({acesso})"
             )
 
 
-# LABORATÓRIO DE TESTES
+# LABORATÓRIO
 
 st.divider()
 
 st.header("🧪 Laboratório de testes")
 
 st.write(
-    "Teste a disponibilidade técnica das APIs "
-    "e verifique se elas retornam dados."
+    "Verifique a resposta técnica das APIs "
+    "e se elas retornam dados."
 )
 
 
@@ -185,16 +154,13 @@ def exibir_resultado(resultado):
         "Sim" if resultado["tem_dados"] else "Não"
     )
 
-    st.write(
-        "**Detalhes:**",
-        resultado["detalhes"]
-    )
+    st.write("**Detalhes:**", resultado["detalhes"])
 
     with st.expander("Visualizar resposta técnica"):
         st.json(resultado)
 
 
-# TESTE BANCO CENTRAL
+# BANCO CENTRAL
 
 st.subheader("🏦 Banco Central do Brasil")
 
@@ -207,7 +173,7 @@ if st.button("🚀 Testar API do Banco Central"):
     exibir_resultado(resultado)
 
 
-# TESTE PORTAL DE DADOS ABERTOS
+# PORTAL DE DADOS ABERTOS
 
 st.subheader("📂 Portal Brasileiro de Dados Abertos")
 
@@ -224,12 +190,4 @@ if st.button("🚀 Testar Portal de Dados Abertos"):
 
 st.divider()
 
-st.caption(
-    "Radar de Oportunidades | Versão 1.2"
-)
-
-
-# FUNÇÃO AUXILIAR
-
-def contar_apis_seguro():
-    return len(listar_apis())
+st.caption("Radar de Oportunidades | Versão 1.2")
